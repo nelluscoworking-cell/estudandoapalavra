@@ -77,6 +77,175 @@ h1{font-size:42px;line-height:.98;letter-spacing:-1.4px;margin:0}.rule{height:1p
 }
 .mark-hint.on{display:block}
 
+
+/* Configurações de leitura */
+:root{
+  --reading-size:22px;
+  --reading-line:1.68;
+  --theme-bg:#ebe6dc;
+  --theme-app:#f7f2e8;
+  --theme-paper:#fffdf8;
+  --theme-text:#171717;
+  --theme-muted:#746f66;
+  --theme-line:#d9d1c4;
+}
+
+body{
+  background:var(--theme-bg);
+  color:var(--theme-text);
+}
+
+.app{
+  background:var(--theme-app);
+}
+
+.reading-section,
+.settings-section{
+  background:var(--theme-paper);
+}
+
+.reading p{
+  font-size:var(--reading-size) !important;
+  line-height:var(--reading-line) !important;
+}
+
+.source-list{
+  font-size:calc(var(--reading-size) - 1px) !important;
+  line-height:1.65 !important;
+}
+
+.source-heading{
+  color:var(--theme-text);
+}
+
+.page-label,
+.eyebrow,
+.color-panel-title{
+  color:var(--theme-muted) !important;
+}
+
+.ebook-page,
+.notes-panel,
+.menu>a,
+.group summary,
+.subnav a{
+  border-color:var(--theme-line) !important;
+}
+
+body.font-medium{
+  --reading-size:22px;
+  --reading-line:1.68;
+}
+
+body.font-large{
+  --reading-size:27px;
+  --reading-line:1.72;
+}
+
+.settings-reading{
+  min-height:65vh;
+}
+
+.settings-card{
+  border-top:1px solid var(--theme-text);
+  padding:22px 0;
+}
+
+.settings-card:last-child{
+  border-bottom:1px solid var(--theme-text);
+}
+
+.settings-label{
+  font:500 22px Georgia,serif;
+  margin-bottom:14px;
+}
+
+.settings-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.settings-options button{
+  min-height:48px;
+  border:1px solid var(--theme-text);
+  background:transparent;
+  color:var(--theme-text);
+  font-size:14px;
+}
+
+.settings-options button.active{
+  background:var(--yellow);
+  color:#171717;
+}
+
+/* Tema escuro */
+body.theme-dark{
+  --theme-bg:#111111;
+  --theme-app:#151515;
+  --theme-paper:#1b1b1b;
+  --theme-text:#f4efe6;
+  --theme-muted:#aaa39a;
+  --theme-line:#3a3834;
+}
+
+body.theme-dark .hero,
+body.theme-dark .section-top{
+  color:#171717;
+}
+
+body.theme-dark .home,
+body.theme-dark .reading,
+body.theme-dark .settings-reading{
+  background:var(--theme-paper);
+  color:var(--theme-text);
+}
+
+body.theme-dark .menu,
+body.theme-dark .group,
+body.theme-dark .subnav{
+  background:var(--theme-paper);
+}
+
+body.theme-dark .menu>a,
+body.theme-dark .group summary,
+body.theme-dark .subnav a{
+  color:var(--theme-text);
+}
+
+body.theme-dark .menu>a.feature{
+  color:#171717;
+}
+
+body.theme-dark .study-tools button,
+body.theme-dark .color-panel,
+body.theme-dark .notes-panel,
+body.theme-dark .sheet{
+  background:#202020;
+  color:var(--theme-text);
+}
+
+body.theme-dark .study-tools button,
+body.theme-dark .apply,
+body.theme-dark .row button,
+body.theme-dark .settings-options button{
+  border-color:#d9d1c4;
+}
+
+body.theme-dark .note-item p{
+  color:#c8c1b8;
+}
+
+body.theme-dark .reading ::selection{
+  background:rgba(110,174,255,.52);
+  color:#ffffff;
+}
+
+body.theme-dark .reading ::-moz-selection{
+  background:rgba(110,174,255,.52);
+  color:#ffffff;
+}
+
 </style>
 </head>
 <body>
@@ -101,6 +270,9 @@ h1{font-size:42px;line-height:.98;letter-spacing:-1.4px;margin:0}.rule{height:1p
 <details class="group"><summary><span class="num">03</span><b>Antigo Testamento</b><span>⌄</span></summary><div class="subnav"><a href='#genesis'><span class='num'>01</span><b>Gênesis</b><span>→</span></a><a href='#exodo'><span class='num'>02</span><b>Êxodo</b><span>→</span></a><a href='#levitico'><span class='num'>03</span><b>Levítico</b><span>→</span></a><a href='#numeros'><span class='num'>04</span><b>Números</b><span>→</span></a><a href='#deuteronomio'><span class='num'>05</span><b>Deuteronômio</b><span>→</span></a><a href='#josue'><span class='num'>06</span><b>Josué</b><span>→</span></a><a href='#juizes'><span class='num'>07</span><b>Juízes</b><span>→</span></a><a href='#rute'><span class='num'>08</span><b>Rute</b><span>→</span></a><a href='#samuel'><span class='num'>09</span><b>I e II Samuel</b><span>→</span></a><a href='#reis'><span class='num'>10</span><b>I e II Reis</b><span>→</span></a><a href='#cronicas'><span class='num'>11</span><b>I e II Crônicas</b><span>→</span></a><a href='#esdras'><span class='num'>12</span><b>Esdras</b><span>→</span></a><a href='#neemias'><span class='num'>13</span><b>Neemias</b><span>→</span></a><a href='#ester'><span class='num'>14</span><b>Ester</b><span>→</span></a><a href='#jo'><span class='num'>15</span><b>Jó</b><span>→</span></a><a href='#salmos'><span class='num'>16</span><b>Salmos</b><span>→</span></a><a href='#proverbios'><span class='num'>17</span><b>Provérbios</b><span>→</span></a><a href='#eclesiastes'><span class='num'>18</span><b>Eclesiastes</b><span>→</span></a><a href='#cantares'><span class='num'>19</span><b>Cantares de Salomão</b><span>→</span></a><a href='#isaias'><span class='num'>20</span><b>Isaías</b><span>→</span></a><a href='#jeremias'><span class='num'>21</span><b>Jeremias</b><span>→</span></a><a href='#lamentacoes'><span class='num'>22</span><b>Lamentações de Jeremias</b><span>→</span></a><a href='#ezequiel'><span class='num'>23</span><b>Ezequiel</b><span>→</span></a><a href='#daniel'><span class='num'>24</span><b>Daniel</b><span>→</span></a><a href='#oseias'><span class='num'>25</span><b>Oseias</b><span>→</span></a><a href='#joel'><span class='num'>26</span><b>Joel</b><span>→</span></a><a href='#amos'><span class='num'>27</span><b>Amós</b><span>→</span></a><a href='#obadias'><span class='num'>28</span><b>Obadias</b><span>→</span></a><a href='#jonas'><span class='num'>29</span><b>Jonas</b><span>→</span></a><a href='#miqueias'><span class='num'>30</span><b>Miquéias</b><span>→</span></a><a href='#naum'><span class='num'>31</span><b>Naum</b><span>→</span></a><a href='#habacuque'><span class='num'>32</span><b>Habacuque</b><span>→</span></a><a href='#sofonias'><span class='num'>33</span><b>Sofonias</b><span>→</span></a><a href='#ageu'><span class='num'>34</span><b>Ageu</b><span>→</span></a><a href='#zacarias'><span class='num'>35</span><b>Zacarias</b><span>→</span></a><a href='#malaquias'><span class='num'>36</span><b>Malaquias</b><span>→</span></a></div></details>
 <details class="group"><summary><span class="num">04</span><b>Novo Testamento</b><span>⌄</span></summary><div class="subnav"><a href='#mateus'><span class='num'>37</span><b>Mateus</b><span>→</span></a><a href='#marcos'><span class='num'>38</span><b>Marcos</b><span>→</span></a><a href='#lucas'><span class='num'>39</span><b>Lucas</b><span>→</span></a><a href='#joao'><span class='num'>40</span><b>João</b><span>→</span></a><a href='#atos'><span class='num'>41</span><b>Atos dos Apóstolos</b><span>→</span></a><a href='#romanos'><span class='num'>42</span><b>Romanos</b><span>→</span></a><a href='#corintios'><span class='num'>43</span><b>I e II Coríntios</b><span>→</span></a><a href='#galatas'><span class='num'>44</span><b>Gálatas</b><span>→</span></a><a href='#efesios'><span class='num'>45</span><b>Efésios</b><span>→</span></a><a href='#filipenses'><span class='num'>46</span><b>Filipenses</b><span>→</span></a><a href='#colossenses'><span class='num'>47</span><b>Colossenses</b><span>→</span></a><a href='#tessalonicenses'><span class='num'>48</span><b>I e II Tessalonicenses</b><span>→</span></a><a href='#timoteo'><span class='num'>49</span><b>Timóteo</b><span>→</span></a><a href='#tito'><span class='num'>50</span><b>Tito</b><span>→</span></a><a href='#filemom'><span class='num'>51</span><b>Filêmon</b><span>→</span></a><a href='#hebreus'><span class='num'>52</span><b>Hebreus</b><span>→</span></a><a href='#tiago'><span class='num'>53</span><b>Tiago</b><span>→</span></a><a href='#pedro'><span class='num'>54</span><b>I e II Pedro</b><span>→</span></a><a href='#joao-cartas'><span class='num'>55</span><b>I, II e III João</b><span>→</span></a><a href='#judas'><span class='num'>56</span><b>Judas</b><span>→</span></a><a href='#apocalipse'><span class='num'>57</span><b>Apocalipse</b><span>→</span></a></div></details>
 <a href="#consideracoes"><span class="num">05</span><b>Considerações Finais</b><span>→</span></a>
+
+<a href="#configuracoes"><span class="num">06</span><b>Configurações</b><span>→</span></a>
+
 </nav>
 </main>
 
@@ -1656,6 +1828,34 @@ h1{font-size:42px;line-height:.98;letter-spacing:-1.4px;margin:0}.rule{height:1p
 </section>
 
 
+
+<section id="configuracoes" class="reading-section settings-section">
+  <div class="section-top">
+    <a class="back-home" href="#inicio">←</a>
+    <div>
+      <span>ESTUDO BÍBLICO</span>
+      <h2>Configurações</h2>
+    </div>
+  </div>
+  <article class="reading settings-reading">
+    <div class="settings-card">
+      <div class="settings-label">Tamanho da fonte</div>
+      <div class="settings-options font-options">
+        <button type="button" data-font="medium" onclick="setFontSize('medium')">Médio</button>
+        <button type="button" data-font="large" onclick="setFontSize('large')">Grande</button>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-label">Tema</div>
+      <div class="settings-options theme-options">
+        <button type="button" data-theme="light" onclick="setTheme('light')">Claro</button>
+        <button type="button" data-theme="dark" onclick="setTheme('dark')">Escuro</button>
+      </div>
+    </div>
+  </article>
+</section>
+
 <div class="footer">DE GÊNESIS A APOCALIPSE · LU SILVEIRA</div>
 
 <div id="noteModal" class="modal"><div class="sheet"><h3>Adicionar anotação</h3><blockquote id="selectedQuote" style="font:15px/1.5 Georgia,serif;border-left:3px solid var(--yellow);padding-left:10px"></blockquote><textarea id="noteText" placeholder="Escreva sua anotação pessoal aqui..."></textarea><div class="row"><button onclick="closeNote()">Cancelar</button><button class="save" onclick="saveNote()">Salvar</button></div></div></div>
@@ -1781,7 +1981,7 @@ function applyMarks(){clearMarks();items().forEach(x=>{const sec=document.getEle
 function renderAll(){renderLists();applyMarks();setHighlightColor(currentColor())}
 function updateResume(data){const t=document.getElementById('resumeText'),a=document.getElementById('resumeLink'),bar=document.getElementById('progressBar');if(data){t.textContent=data.title+' · PG '+data.page;a.href='#'+data.sid+'-pg-'+data.page;bar.style.width=Math.min(100,Math.max(2,(data.page/178)*100))+'%'}}
 function observePages(){const pages=[...document.querySelectorAll('.ebook-page')];if(!('IntersectionObserver'in window))return;const io=new IntersectionObserver(es=>{const v=es.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(v){const d={sid:v.target.dataset.section,title:v.target.dataset.title,page:Number(v.target.dataset.page)};localStorage.setItem(LAST,JSON.stringify(d));updateResume(d)}},{threshold:[.45,.65]});pages.forEach(p=>io.observe(p))}
-document.addEventListener('DOMContentLoaded',()=>{renderAll();try{updateResume(JSON.parse(localStorage.getItem(LAST)||'null'))}catch(e){}observePages()});
+document.addEventListener('DOMContentLoaded',()=>{loadReaderPreferences();renderAll();try{updateResume(JSON.parse(localStorage.getItem(LAST)||'null'))}catch(e){}observePages()});
 
 /* Auto-apply the chosen marker color after the user finishes selecting text. */
 document.addEventListener('selectionchange',()=>{
@@ -1814,6 +2014,40 @@ document.addEventListener('keyup',e=>{
     selectionTimer=setTimeout(saveSelectionAutomatically,180);
   }
 });
+
+
+const FONT_PREF_KEY='dg2aFontPrefV1';
+const THEME_PREF_KEY='dg2aThemePrefV1';
+
+function setFontSize(size){
+  const val = size==='large' ? 'large' : 'medium';
+  document.body.classList.remove('font-medium','font-large');
+  document.body.classList.add('font-'+val);
+  localStorage.setItem(FONT_PREF_KEY,val);
+  updateSettingsButtons();
+}
+
+function setTheme(theme){
+  const val = theme==='dark' ? 'dark' : 'light';
+  document.body.classList.remove('theme-light','theme-dark');
+  document.body.classList.add('theme-'+val);
+  localStorage.setItem(THEME_PREF_KEY,val);
+  updateSettingsButtons();
+}
+
+function loadReaderPreferences(){
+  const font = localStorage.getItem(FONT_PREF_KEY) || 'medium';
+  const theme = localStorage.getItem(THEME_PREF_KEY) || 'light';
+  setFontSize(font);
+  setTheme(theme);
+}
+
+function updateSettingsButtons(){
+  const font = localStorage.getItem(FONT_PREF_KEY) || 'medium';
+  const theme = localStorage.getItem(THEME_PREF_KEY) || 'light';
+  document.querySelectorAll('[data-font]').forEach(b=>b.classList.toggle('active', b.dataset.font===font));
+  document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('active', b.dataset.theme===theme));
+}
 
 </script>
 </body></html>

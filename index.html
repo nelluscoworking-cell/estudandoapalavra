@@ -2214,10 +2214,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* Navegação por telas e seleção contextual — revisão */
 const fixStyle=document.createElement('style');
 fixStyle.textContent=`html{scroll-behavior:auto!important} .reading-section,.settings-section{display:none} body.view-reading .hero,body.view-reading .home,body.view-reading .footer{display:none} body.view-reading .reading-section.active-view,body.view-reading .settings-section.active-view{display:block} body.view-reading .app{min-height:100dvh} .selection-palette{position:fixed;z-index:180;display:none;gap:12px;align-items:center;padding:11px 15px;background:var(--theme-paper);border:1px solid var(--theme-text);border-radius:24px;box-shadow:0 8px 28px #0003;left:50%;bottom:76px;transform:translateX(-50%)} .selection-palette.visible{display:flex} .selection-palette button{width:32px;height:32px;border:1px solid #555;border-radius:50%;cursor:pointer} .selection-palette .note-shortcut{width:auto;border-radius:14px;background:var(--yellow);padding:0 10px;font-size:13px} .study-tools{position:sticky;bottom:0;background:var(--theme-paper);padding:8px 0} .color-panel{display:none!important} .selection-palette.visible{display:flex!important} .selection-palette{bottom:calc(82px + env(safe-area-inset-bottom));max-width:calc(100vw - 20px)} .selection-palette button{flex-shrink:0}`;
+fixStyle.textContent += ` .selection-palette .white{background:#fff!important;border:2px solid #777!important;position:relative}.selection-palette .white:after{content:"×";position:absolute;inset:0;display:grid;place-items:center;color:#555;font-size:23px;line-height:1} `;
 document.head.appendChild(fixStyle);
 let chosenRange=null,chosenSid=null,chosenText='',noteEditId=null;
 const palette=document.createElement('div');palette.className='selection-palette';palette.id='selectionPalette';
-palette.innerHTML='<button type="button" class="yellow" data-pick="yellow" aria-label="Marcar amarelo"></button><button type="button" class="blue" data-pick="blue" aria-label="Marcar azul"></button><button type="button" class="red" data-pick="red" aria-label="Marcar vermelho"></button><button type="button" class="note-shortcut" data-pick="note">✎ Anotar</button>';
+palette.innerHTML='<button type="button" class="yellow" data-pick="yellow" aria-label="Marcar amarelo"></button><button type="button" class="blue" data-pick="blue" aria-label="Marcar azul"></button><button type="button" class="red" data-pick="red" aria-label="Marcar vermelho"></button><button type="button" class="white" data-pick="white" aria-label="Remover destaque" title="Remover destaque"></button><button type="button" class="note-shortcut" data-pick="note">✎ Anotar</button>';
 document.body.appendChild(palette);
 function cacheSelection(){const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount)return;const r=sel.getRangeAt(0),anchor=r.commonAncestorContainer,element=anchor.nodeType===1?anchor:anchor.parentElement,page=element?.closest('.ebook-page');if(!page)return;chosenRange=r.cloneRange();chosenSid=page.dataset.section;chosenText=sel.toString().trim();}
 function selectionPopup(){cacheSelection();if(!chosenText||!chosenSid)return;palette.classList.add('visible');}
@@ -2226,7 +2227,24 @@ document.addEventListener('selectionchange',()=>{clearTimeout(window._selectionD
 document.addEventListener('pointerup',e=>{if(e.target.closest('.reading .ebook-page'))setTimeout(selectionPopup,80)});document.addEventListener('mouseup',e=>{if(e.target.closest('.ebook-page'))setTimeout(selectionPopup,80)});document.addEventListener('touchend',e=>{if(e.target.closest('.ebook-page'))setTimeout(selectionPopup,350)},{passive:true});
 palette.addEventListener('pointerdown',e=>e.preventDefault());
 palette.addEventListener('click',e=>{const btn=e.target.closest('[data-pick]');if(!btn)return;const color=btn.dataset.pick;if(color==='note'){openNote(chosenSid);hidePalette();return;} saveChosenHighlight(color)});
-function saveChosenHighlight(color){cacheSelection();if(!chosenSid||!chosenText){setHighlightColor(color);hidePalette();toast('Primeiro selecione um trecho do texto.');return;}const data=items();data.push({id:Date.now()+Math.random(),sid:chosenSid,text:chosenText,note:'',color, pageId:chosenRange?.startContainer.parentElement?.closest('.ebook-page')?.id||''});setItems(data);setHighlightColor(color);hidePalette();window.getSelection()?.removeAllRanges();chosenText='';chosenRange=null;renderAll();toast('Trecho destacado e salvo.');}
+function saveChosenHighlight(color){cacheSelection();
+if(color==='white'){
+ const selected=(chosenText||window.getSelection()?.toString()||'').trim();
+ const sid=chosenSid;
+ if(!selected||!sid){hidePalette();toast('Selecione um trecho destacado para remover a cor.');return;}
+ const data=items();let removed=0;
+ const kept=data.filter(x=>{
+   if(x.sid!==sid||!x.text||!x.color)return true;
+   const a=x.text.trim(),b=selected;
+   const same=a===b||a.includes(b)||b.includes(a);
+   if(same){removed++;return false;}
+   return true;
+ });
+ if(removed){setItems(kept);renderAll();toast('Destaque removido.');}
+ else toast('Não encontrei um destaque nesse trecho.');
+ hidePalette();window.getSelection()?.removeAllRanges();chosenText='';chosenRange=null;return;
+}
+if(!chosenSid||!chosenText){setHighlightColor(color);hidePalette();toast('Primeiro selecione um trecho do texto.');return;}const data=items();data.push({id:Date.now()+Math.random(),sid:chosenSid,text:chosenText,note:'',color, pageId:chosenRange?.startContainer.parentElement?.closest('.ebook-page')?.id||''});setItems(data);setHighlightColor(color);hidePalette();window.getSelection()?.removeAllRanges();chosenText='';chosenRange=null;renderAll();toast('Trecho destacado e salvo.');}
 function toggleColorPanel(sid){cacheSelection();chosenSid=sid;palette.classList.add('visible');if(!chosenText)toast('Selecione um trecho; depois toque na cor desejada.');}
 function armHighlightMode(color){saveChosenHighlight(color)}
 function openNote(sid){cacheSelection();pendingSection=sid;pendingText=chosenSid===sid?chosenText:'';noteEditId=null;const q=document.getElementById('selectedQuote');const input=document.getElementById('noteText');if(q)q.textContent=pendingText||'Anotação pessoal';if(input)input.value='';document.getElementById('noteModal')?.classList.add('on');hidePalette();}

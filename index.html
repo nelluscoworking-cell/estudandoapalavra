@@ -246,6 +246,24 @@ body.theme-dark .reading ::-moz-selection{
   color:#ffffff;
 }
 
+
+.meta-single{
+  display:block !important;
+  text-align:left;
+}
+.meta-single span{
+  display:block;
+  white-space:nowrap;
+  font-size:9.5px;
+  letter-spacing:1.2px;
+}
+@media (max-width:380px){
+  .meta-single span{
+    font-size:8.8px;
+    letter-spacing:1px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -254,7 +272,7 @@ body.theme-dark .reading ::-moz-selection{
 <div class="kicker">ESTUDO BÍBLICO</div>
 <h1>DE GÊNESIS A<br>APOCALIPSE</h1>
 <div class="rule"></div>
-<div class="meta"><span>Uma jornada completa pela palavra de Deus</span><span>Lu Silveira</span></div>
+<div class="meta meta-single"><span>Uma jornada completa pela palavra de Deus</span></div>
 </header>
 
 <main class="home">
@@ -1862,192 +1880,336 @@ body.theme-dark .reading ::-moz-selection{
 <div id="toast" class="toast"></div>
 </div>
 
-<script>
-const STORE='dg2aHighlightsV3', LAST='dg2aLastReadV2', COLOR='dg2aColorV1';
-let pendingSection=null,pendingText='';
-let markMode={active:false,sid:null,color:null};
-let selectionTimer=null;
-let cachedSelection={sid:null,text:'',range:null};
 
-function cacheSelection(){
-  const sel=window.getSelection();
-  if(!sel || sel.rangeCount===0) return;
-  const text=sel.toString().trim();
-  if(!text) return;
-  const range=sel.getRangeAt(0).cloneRange();
-  const sec=range.commonAncestorContainer.nodeType===1
-    ? range.commonAncestorContainer.closest?.('.reading-section')
-    : range.commonAncestorContainer.parentElement?.closest?.('.reading-section');
-  if(!sec) return;
-  cachedSelection={sid:sec.id,text,range};
+<script>
+const STORE='dg2aHighlightsV4';
+const LAST='dg2aLastReadV2';
+const COLOR='dg2aColorV2';
+const FONT_PREF_KEY='dg2aFontPrefV1';
+const THEME_PREF_KEY='dg2aThemePrefV1';
+
+let pendingSection=null;
+let pendingText='';
+let markMode={active:false,sid:null,color:'yellow'};
+let selectionTimer=null;
+
+function items(){
+  try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch(e){return[]}
+}
+function setItems(v){
+  localStorage.setItem(STORE,JSON.stringify(v));
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  if(!t) return;
+  t.textContent=msg;
+  t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),1700);
+}
+function esc(x){
+  return String(x).replace(/[&<>"']/g,m=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
 }
 
-document.addEventListener('selectionchange',()=>{
-  setTimeout(cacheSelection,0);
-});
-document.addEventListener('touchend',()=>{
-  setTimeout(cacheSelection,60);
-},{passive:true});
-document.addEventListener('mouseup',()=>{
-  setTimeout(cacheSelection,0);
-});
+/* ---------- Configurações ---------- */
+function setFontSize(size){
+  const val=size==='large'?'large':'medium';
+  document.body.classList.remove('font-medium','font-large');
+  document.body.classList.add('font-'+val);
+  localStorage.setItem(FONT_PREF_KEY,val);
+  updateSettingsButtons();
+}
+function setTheme(theme){
+  const val=theme==='dark'?'dark':'light';
+  document.body.classList.remove('theme-light','theme-dark');
+  document.body.classList.add('theme-'+val);
+  localStorage.setItem(THEME_PREF_KEY,val);
+  updateSettingsButtons();
+}
+function loadReaderPreferences(){
+  setFontSize(localStorage.getItem(FONT_PREF_KEY)||'medium');
+  setTheme(localStorage.getItem(THEME_PREF_KEY)||'light');
+}
+function updateSettingsButtons(){
+  const font=localStorage.getItem(FONT_PREF_KEY)||'medium';
+  const theme=localStorage.getItem(THEME_PREF_KEY)||'light';
+  document.querySelectorAll('[data-font]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.font===font);
+  });
+  document.querySelectorAll('[data-theme]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.theme===theme);
+  });
+}
 
-function items(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch(e){return[]}}
-function setItems(v){localStorage.setItem(STORE,JSON.stringify(v))}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1500)}
-function currentColor(){return localStorage.getItem(COLOR)||'yellow'}
-function setHighlightColor(c,el){localStorage.setItem(COLOR,c);document.querySelectorAll('.color-panel').forEach(p=>{p.querySelectorAll('.color-dot').forEach(b=>b.classList.remove('active'));p.querySelector('.'+c)?.classList.add('active')}
+/* ---------- Marca-texto ---------- */
+function currentColor(){
+  return localStorage.getItem(COLOR)||'yellow';
+}
+function setHighlightColor(color){
+  localStorage.setItem(COLOR,color);
+  document.querySelectorAll('.color-panel').forEach(panel=>{
+    panel.querySelectorAll('.color-dot').forEach(b=>b.classList.remove('active'));
+    panel.querySelector('.color-dot.'+color)?.classList.add('active');
+  });
+}
+function cancelMarkMode(){
+  markMode={active:false,sid:null,color:currentColor()};
+  document.querySelectorAll('[data-role="mark-button"]').forEach(b=>b.classList.remove('mark-mode-on'));
+  document.querySelectorAll('.mark-hint').forEach(h=>h.classList.remove('on'));
+}
+function toggleColorPanel(sid){
+  const panel=document.getElementById('color-panel-'+sid);
+  if(!panel) return;
+  const shouldOpen=!panel.classList.contains('open');
+  document.querySelectorAll('.color-panel').forEach(p=>p.classList.remove('open'));
+  cancelMarkMode();
+  if(shouldOpen) panel.classList.add('open');
+}
 function armHighlightMode(color,el){
-  setHighlightColor(color,el);
-  const panel=el.closest('.color-panel');
+  setHighlightColor(color);
+  const panel=el?.closest('.color-panel');
+  if(!panel) return;
   const sid=panel.id.replace('color-panel-','');
   markMode={active:true,sid,color};
   document.querySelectorAll('[data-role="mark-button"]').forEach(b=>b.classList.remove('mark-mode-on'));
   document.querySelector('[data-section="'+sid+'"] [data-role="mark-button"]')?.classList.add('mark-mode-on');
   document.querySelectorAll('.mark-hint').forEach(h=>h.classList.remove('on'));
   document.getElementById('mark-hint-'+sid)?.classList.add('on');
-  toast('Marca-texto ativado. Selecione o trecho.');
+  toast('Agora selecione o trecho que deseja marcar.');
 }
-
-function cancelHighlightMode(){
-  markMode={active:false,sid:null,color:null};
-  document.querySelectorAll('[data-role="mark-button"]').forEach(b=>b.classList.remove('mark-mode-on'));
-  document.querySelectorAll('.mark-hint').forEach(h=>h.classList.remove('on'));
-}
-
-function saveSelectionAutomatically(){
-  if(!markMode.active || !markMode.sid) return;
-  const text=selectionText(markMode.sid);
-  if(!text) return;
-  const d=items();
-  const duplicate=d.some(x=>x.sid===markMode.sid && x.text===text && !x.note && (x.color||'yellow')===markMode.color);
-  if(!duplicate){
-    d.push({id:Date.now(),sid:markMode.sid,text,note:'',color:markMode.color||currentColor()});
-    setItems(d);
-    renderAll();
-    document.getElementById('notes-'+markMode.sid)?.classList.add('open');
-    toast('Trecho marcado.');
-  }
-  try{window.getSelection()?.removeAllRanges()}catch(e){}
-  document.querySelectorAll('.color-panel').forEach(x=>x.classList.remove('open'));
-  cancelHighlightMode();
-}
-)}
-function toggleColorPanel(sid){
-  const p=document.getElementById('color-panel-'+sid);
-  const open=p.classList.contains('open');
-  document.querySelectorAll('.color-panel').forEach(x=>x.classList.remove('open'));
-  document.querySelectorAll('[data-role="mark-button"]').forEach(b=>b.classList.remove('mark-mode-on'));
-  if(!open){
-    p.classList.add('open');
-  }else{
-    cancelHighlightMode();
-  }
-}
-function selectionText(sid){
+function getSelectionForSection(sid){
   const sel=window.getSelection();
-  if(sel && sel.rangeCount){
-    const txt=sel.toString().trim();
-    if(txt){
-      const range=sel.getRangeAt(0);
-      const sec=document.getElementById(sid);
-      if(sec && sec.contains(range.commonAncestorContainer)){
-        cachedSelection={sid,text:txt,range:range.cloneRange()};
-        return txt;
-      }
-    }
-  }
-  if(cachedSelection.sid===sid && cachedSelection.text){
-    return cachedSelection.text;
-  }
-  return '';
+  if(!sel || sel.rangeCount===0) return '';
+  const text=sel.toString().trim();
+  if(!text) return '';
+  const range=sel.getRangeAt(0);
+  const sec=document.getElementById(sid);
+  if(!sec || !sec.contains(range.commonAncestorContainer)) return '';
+  return text;
 }
-function saveHighlight(sid){const text=selectionText(sid);if(!text)return toast('Selecione um trecho primeiro.');const d=items();d.push({id:Date.now(),sid,text,note:'',color:currentColor()});setItems(d);renderAll();document.getElementById('notes-'+sid)?.classList.add('open');document.querySelectorAll('.color-panel').forEach(x=>x.classList.remove('open'));toast('Trecho destacado.')}
-function openNote(sid){const text=selectionText(sid);if(!text)return toast('Selecione um trecho primeiro.');pendingSection=sid;pendingText=text;document.getElementById('selectedQuote').textContent=text;document.getElementById('noteText').value='';document.getElementById('noteModal').classList.add('on')}
-function closeNote(){document.getElementById('noteModal').classList.remove('on')}
-function saveNote(){const d=items();d.push({id:Date.now(),sid:pendingSection,text:pendingText,note:document.getElementById('noteText').value.trim(),color:currentColor()});setItems(d);closeNote();renderAll();document.getElementById('notes-'+pendingSection)?.classList.add('open');toast('Anotação salva.')}
-function removeItem(id){setItems(items().filter(x=>x.id!==id));renderAll()}
-function scrollNotes(sid){
-  const panel=document.getElementById('notes-'+sid);
-  if(!panel) return;
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth',block:'start'});
-})}
-function esc(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function renderLists(){document.querySelectorAll('.notes-panel').forEach(p=>{const sid=p.id.replace('notes-',''),mine=items().filter(x=>x.sid===sid),list=p.querySelector('.notes-list');list.innerHTML=mine.length?mine.map(x=>`<div class="note-item"><blockquote>${esc(x.text)}</blockquote>${x.note?`<p>${esc(x.note)}</p>`:''}<button onclick="removeItem(${x.id})">Excluir</button></div>`).join(''):'<p style="font-size:12px;color:#777">Nenhum destaque ou anotação salvo.</p>'})}
-function clearMarks(){document.querySelectorAll('mark[data-u="1"]').forEach(m=>{const t=document.createTextNode(m.textContent);m.replaceWith(t);t.parentNode?.normalize()})}
-function markFirst(root,target,color){if(!target)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){const p=n.parentElement;if(!p||p.closest('.study-tools,.color-panel,.notes-panel'))return NodeFilter.FILTER_REJECT;if(['SCRIPT','STYLE','MARK'].includes(p.tagName))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});let ns=[],c='',n;while(n=w.nextNode()){ns.push({n,start:c.length,end:c.length+n.nodeValue.length});c+=n.nodeValue}const i=c.indexOf(target);if(i<0)return;const e=i+target.length;ns.filter(x=>x.end>i&&x.start<e).forEach(x=>{const a=Math.max(0,i-x.start),b=Math.min(x.n.nodeValue.length,e-x.start);if(a>=b)return;const r=document.createRange();r.setStart(x.n,a);r.setEnd(x.n,b);const m=document.createElement('mark');m.dataset.u='1';m.className='highlight-'+color;try{r.surroundContents(m)}catch(_){}})}
-function applyMarks(){clearMarks();items().forEach(x=>{const sec=document.getElementById(x.sid);if(sec)markFirst(sec.querySelector('.reading'),x.text,x.color||'yellow')})}
-function renderAll(){renderLists();applyMarks();setHighlightColor(currentColor())}
-function updateResume(data){const t=document.getElementById('resumeText'),a=document.getElementById('resumeLink'),bar=document.getElementById('progressBar');if(data){t.textContent=data.title+' · PG '+data.page;a.href='#'+data.sid+'-pg-'+data.page;bar.style.width=Math.min(100,Math.max(2,(data.page/178)*100))+'%'}}
-function observePages(){const pages=[...document.querySelectorAll('.ebook-page')];if(!('IntersectionObserver'in window))return;const io=new IntersectionObserver(es=>{const v=es.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(v){const d={sid:v.target.dataset.section,title:v.target.dataset.title,page:Number(v.target.dataset.page)};localStorage.setItem(LAST,JSON.stringify(d));updateResume(d)}},{threshold:[.45,.65]});pages.forEach(p=>io.observe(p))}
-document.addEventListener('DOMContentLoaded',()=>{loadReaderPreferences();renderAll();try{updateResume(JSON.parse(localStorage.getItem(LAST)||'null'))}catch(e){}observePages()});
+function saveActiveSelection(){
+  if(!markMode.active || !markMode.sid) return;
+  const text=getSelectionForSection(markMode.sid);
+  if(!text) return;
 
-/* Auto-apply the chosen marker color after the user finishes selecting text. */
+  const data=items();
+  const exists=data.some(x=>
+    x.sid===markMode.sid &&
+    x.text===text &&
+    !x.note &&
+    (x.color||'yellow')===markMode.color
+  );
+
+  if(!exists){
+    data.push({
+      id:Date.now(),
+      sid:markMode.sid,
+      text,
+      note:'',
+      color:markMode.color
+    });
+    setItems(data);
+  }
+
+  const sid=markMode.sid;
+  document.querySelectorAll('.color-panel').forEach(p=>p.classList.remove('open'));
+  cancelMarkMode();
+  renderAll();
+  document.getElementById('notes-'+sid)?.classList.add('open');
+
+  try{window.getSelection()?.removeAllRanges()}catch(e){}
+  toast('Trecho marcado.');
+}
+
+/* Salva após a seleção ficar estável, inclusive no Safari/iPhone */
 document.addEventListener('selectionchange',()=>{
   if(!markMode.active) return;
   clearTimeout(selectionTimer);
   selectionTimer=setTimeout(()=>{
-    const txt=selectionText(markMode.sid);
-    if(txt && txt.length>0){
-      // wait for native selection handles/menu to settle on iOS
-    }
-  },120);
+    const txt=getSelectionForSection(markMode.sid);
+    if(txt) saveActiveSelection();
+  },900);
 });
 
-document.addEventListener('touchend',()=>{
-  if(!markMode.active) return;
-  clearTimeout(selectionTimer);
-  selectionTimer=setTimeout(saveSelectionAutomatically,420);
-},{passive:true});
-
-document.addEventListener('mouseup',()=>{
-  if(!markMode.active) return;
-  clearTimeout(selectionTimer);
-  selectionTimer=setTimeout(saveSelectionAutomatically,120);
-});
-
-/* On keyboards / desktop Safari */
-document.addEventListener('keyup',e=>{
-  if(markMode.active && ['Shift','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
-    clearTimeout(selectionTimer);
-    selectionTimer=setTimeout(saveSelectionAutomatically,180);
+/* ---------- Anotações ---------- */
+function openNote(sid){
+  const text=getSelectionForSection(sid);
+  if(!text){
+    toast('Selecione primeiro o trecho que deseja anotar.');
+    return;
   }
+  pendingSection=sid;
+  pendingText=text;
+  const q=document.getElementById('selectedQuote');
+  const input=document.getElementById('noteText');
+  const modal=document.getElementById('noteModal');
+  if(q) q.textContent=text;
+  if(input) input.value='';
+  if(modal) modal.classList.add('on');
+}
+function closeNote(){
+  document.getElementById('noteModal')?.classList.remove('on');
+}
+function saveNote(){
+  if(!pendingSection || !pendingText) return;
+  const note=document.getElementById('noteText')?.value.trim()||'';
+  const data=items();
+  data.push({
+    id:Date.now(),
+    sid:pendingSection,
+    text:pendingText,
+    note,
+    color:currentColor()
+  });
+  setItems(data);
+  const sid=pendingSection;
+  closeNote();
+  renderAll();
+  document.getElementById('notes-'+sid)?.classList.add('open');
+  toast('Anotação salva.');
+}
+function removeItem(id){
+  setItems(items().filter(x=>x.id!==id));
+  renderAll();
+}
+function scrollNotes(sid){
+  const panel=document.getElementById('notes-'+sid);
+  if(!panel) return;
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')){
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+/* ---------- Renderização dos destaques ---------- */
+function renderLists(){
+  document.querySelectorAll('.notes-panel').forEach(panel=>{
+    const sid=panel.id.replace('notes-','');
+    const mine=items().filter(x=>x.sid===sid);
+    const list=panel.querySelector('.notes-list');
+    if(!list) return;
+    list.innerHTML=mine.length
+      ? mine.map(x=>`
+        <div class="note-item">
+          <blockquote>${esc(x.text)}</blockquote>
+          ${x.note?`<p>${esc(x.note)}</p>`:''}
+          <button type="button" onclick="removeItem(${x.id})">Excluir</button>
+        </div>`).join('')
+      : '<p style="font-size:12px;color:#777">Nenhum destaque ou anotação salvo.</p>';
+  });
+}
+function clearMarks(){
+  document.querySelectorAll('mark[data-u="1"]').forEach(m=>{
+    const t=document.createTextNode(m.textContent);
+    m.replaceWith(t);
+    t.parentNode?.normalize();
+  });
+}
+function markFirst(root,target,color){
+  if(!root || !target) return;
+
+  const walker=document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node){
+        const p=node.parentElement;
+        if(!p || p.closest('.study-tools,.color-panel,.notes-panel')) return NodeFilter.FILTER_REJECT;
+        if(['SCRIPT','STYLE','MARK'].includes(p.tagName)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+
+  let nodes=[];
+  let combined='';
+  let node;
+
+  while((node=walker.nextNode())){
+    nodes.push({node,start:combined.length,end:combined.length+node.nodeValue.length});
+    combined+=node.nodeValue;
+  }
+
+  const idx=combined.indexOf(target);
+  if(idx<0) return;
+  const end=idx+target.length;
+
+  nodes
+    .filter(x=>x.end>idx && x.start<end)
+    .forEach(x=>{
+      const a=Math.max(0,idx-x.start);
+      const b=Math.min(x.node.nodeValue.length,end-x.start);
+      if(a>=b) return;
+
+      const range=document.createRange();
+      range.setStart(x.node,a);
+      range.setEnd(x.node,b);
+
+      const mark=document.createElement('mark');
+      mark.dataset.u='1';
+      mark.className='highlight-'+(color||'yellow');
+
+      try{range.surroundContents(mark)}catch(e){}
+    });
+}
+function applyMarks(){
+  clearMarks();
+  items().forEach(x=>{
+    const sec=document.getElementById(x.sid);
+    if(sec) markFirst(sec.querySelector('.reading'),x.text,x.color||'yellow');
+  });
+}
+function renderAll(){
+  renderLists();
+  applyMarks();
+  setHighlightColor(currentColor());
+}
+
+/* ---------- Continuar estudo ---------- */
+function updateResume(data){
+  const t=document.getElementById('resumeText');
+  const a=document.getElementById('resumeLink');
+  const bar=document.getElementById('progressBar');
+  if(!data || !t || !a || !bar) return;
+  t.textContent=data.title+' · PG '+data.page;
+  a.href='#'+data.sid+'-pg-'+data.page;
+  bar.style.width=Math.min(100,Math.max(2,(data.page/178)*100))+'%';
+}
+function observePages(){
+  const pages=[...document.querySelectorAll('.ebook-page')];
+  if(!('IntersectionObserver' in window) || !pages.length) return;
+
+  const io=new IntersectionObserver(entries=>{
+    const visible=entries
+      .filter(e=>e.isIntersecting)
+      .sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+
+    if(visible){
+      const d={
+        sid:visible.target.dataset.section,
+        title:visible.target.dataset.title,
+        page:Number(visible.target.dataset.page)
+      };
+      localStorage.setItem(LAST,JSON.stringify(d));
+      updateResume(d);
+    }
+  },{threshold:[.45,.65]});
+
+  pages.forEach(p=>io.observe(p));
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadReaderPreferences();
+  renderAll();
+
+  try{
+    const last=JSON.parse(localStorage.getItem(LAST)||'null');
+    if(last) updateResume(last);
+  }catch(e){}
+
+  observePages();
 });
-
-
-const FONT_PREF_KEY='dg2aFontPrefV1';
-const THEME_PREF_KEY='dg2aThemePrefV1';
-
-function setFontSize(size){
-  const val = size==='large' ? 'large' : 'medium';
-  document.body.classList.remove('font-medium','font-large');
-  document.body.classList.add('font-'+val);
-  localStorage.setItem(FONT_PREF_KEY,val);
-  updateSettingsButtons();
-}
-
-function setTheme(theme){
-  const val = theme==='dark' ? 'dark' : 'light';
-  document.body.classList.remove('theme-light','theme-dark');
-  document.body.classList.add('theme-'+val);
-  localStorage.setItem(THEME_PREF_KEY,val);
-  updateSettingsButtons();
-}
-
-function loadReaderPreferences(){
-  const font = localStorage.getItem(FONT_PREF_KEY) || 'medium';
-  const theme = localStorage.getItem(THEME_PREF_KEY) || 'light';
-  setFontSize(font);
-  setTheme(theme);
-}
-
-function updateSettingsButtons(){
-  const font = localStorage.getItem(FONT_PREF_KEY) || 'medium';
-  const theme = localStorage.getItem(THEME_PREF_KEY) || 'light';
-  document.querySelectorAll('[data-font]').forEach(b=>b.classList.toggle('active', b.dataset.font===font));
-  document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('active', b.dataset.theme===theme));
-}
-
 </script>
+
 </body></html>
